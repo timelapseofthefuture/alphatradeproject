@@ -2764,7 +2764,7 @@ Skor eşiği: 75/100 · R:R eşiği: 2.0</div>
 </div>
 <a href="" download="alphasignal-pro.html" id="htmlDownloadLink" style="display:none"></a>
 <script>
-/* AlphaSignal Pro v8 — JSON function loader, _origRenderAll reconstructed */
+/* AlphaSignal Pro v9 */
 
 window.bybitFetch = async function(url) {
   try {
@@ -2782,8 +2782,6 @@ window.bybitFetch = async function(url) {
     }
   }
 };
-console.log('[AlphaSignal Pro] CORS proxy ready');
-
 window._currentSym = 'BTCUSDT';
 window._signalArchive = [];
 window._scanResults = [];
@@ -2823,47 +2821,61 @@ window._mainInterval = null;
 };
   window._origRenderAll = async function(data, c15m) {
   var g = function(id) { return document.getElementById(id); };
+  var reg = data.regime || {};
+  var regStr = typeof reg === 'string' ? reg : (reg.regime || '');
+  var regStrategy = typeof reg === 'object' ? (reg.strategy || '') : '';
+  var adxObj = (typeof reg === 'object' && reg.adx15) ? reg.adx15 : {adx: 0, pdi: 0, mdi: 0};
+  var bb15 = (typeof reg === 'object' && reg.bb15) ? reg.bb15 : {width: 0, pct: 0};
+  var adxVal = adxObj.adx || 0;
+  var bbWidth = bb15.width || 0;
   var pStr = '$' + data.price.toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:4});
-  var chPct = (data.ch24 * 100).toFixed(2) + '%';
-  var chColor = data.ch24 >= 0 ? '#4caf50' : '#f44336';
-  var chPrefix = data.ch24 >= 0 ? '+' : '';
+  var chPct = ((data.ch24||0)*100).toFixed(2) + '%';
+  var chColor = (data.ch24||0) >= 0 ? '#4caf50' : '#f44336';
+  var chPrefix = (data.ch24||0) >= 0 ? '+' : '';
   if (g('headerPrice')) g('headerPrice').textContent = pStr;
   if (g('header24h')) { g('header24h').textContent = chPrefix + chPct; g('header24h').style.color = chColor; }
   if (g('symbolTag')) g('symbolTag').textContent = data.sym.replace('USDT', '/USDT');
   if (g('tickerPrice')) g('tickerPrice').textContent = pStr;
   if (g('tickerChange')) { g('tickerChange').textContent = chPrefix + chPct; g('tickerChange').style.color = chColor; }
   if (g('vol24h')) g('vol24h').textContent = window._fmtV ? window._fmtV(data.vol24h) : data.vol24h;
-  if (g('high24h')) g('high24h').textContent = '$' + (data.hi24||0).toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:4});
-  if (g('low24h')) g('low24h').textContent = '$' + (data.lo24||0).toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:4});
+  if (g('high24h')) g('high24h').textContent = '$' + (data.hi24||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:4});
+  if (g('low24h')) g('low24h').textContent = '$' + (data.lo24||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:4});
   if (g('oi')) g('oi').textContent = window._fmtV ? window._fmtV(data.oi||0) : (data.oi||0);
-  var regime = data.regime || {};
-  if (g('regimeBadge')) g('regimeBadge').textContent = (regime.type||'').toUpperCase();
-  if (g('regimeStrategy')) g('regimeStrategy').textContent = regime.strategy || '';
-  if (g('adxVal')) g('adxVal').textContent = (data.adx15||0).toFixed(1);
-  if (g('bbWidthVal')) g('bbWidthVal').textContent = ((data.bbWidth15||0)*100).toFixed(2) + '%';
+  if (g('regimeBadge')) g('regimeBadge').textContent = regStr.toUpperCase ? regStr.toUpperCase() : regStr;
+  if (g('regimeStrategy')) g('regimeStrategy').textContent = regStrategy;
+  if (g('adxVal')) g('adxVal').textContent = adxVal.toFixed(1);
+  if (g('bbWidthVal')) g('bbWidthVal').textContent = bbWidth.toFixed(2) + '%';
   if (g('volatilityVal')) g('volatilityVal').textContent = (data.atr15||0).toFixed(2);
-  if (window._updateTF) { window._updateTF('tf4h', data.tf4h); window._updateTF('tf1h', data.tf1h||data.tf1h_); window._updateTF('tf15m', data.tf15m||data.tf15m_); }
-  var ac = data.alignedCount || 0;
-  var od = data.overallDir || 'NEUTRAL';
+  var tf4h = data.tf4h || {}; var tf1h = data.tf1h || data.tf1h_ || {}; var tf15m = data.tf15m || data.tf15m_ || {};
+  var d4h = tf4h.direction||'NEUTRAL'; var d1h = tf1h.direction||'NEUTRAL'; var d15m = tf15m.direction||'NEUTRAL';
+  var bp4h = tf4h.bullPoints||0; var ep4h = tf4h.bearPoints||0;
+  var bp1h = tf1h.bullPoints||0; var ep1h = tf1h.bearPoints||0;
+  var bp15m = tf15m.bullPoints||0; var ep15m = tf15m.bearPoints||0;
+  if (window._updateTF) { window._updateTF('tf4h', d4h); window._updateTF('tf1h', d1h); window._updateTF('tf15m', d15m); }
+  var tfEl4 = g('tf4h'); if(tfEl4) tfEl4.textContent = (d4h==='LONG'?'▲':d4h==='SHORT'?'▼':'↔') + ' ' + d4h + ' (' + (d4h==='LONG'?bp4h:ep4h) + '/8)';
+  var tfEl1 = g('tf1h'); if(tfEl1) tfEl1.textContent = (d1h==='LONG'?'▲':d1h==='SHORT'?'▼':'↔') + ' ' + d1h + ' (' + (d1h==='LONG'?bp1h:ep1h) + '/8)';
+  var tfEl15 = g('tf15m'); if(tfEl15) tfEl15.textContent = (d15m==='LONG'?'▲':d15m==='SHORT'?'▼':'↔') + ' ' + d15m + ' (' + (d15m==='LONG'?bp15m:ep15m) + '/8)';
+  var ac = data.alignedCount || 0; var od = data.overallDir || 'NEUTRAL';
   var tfEl = g('tfAlignment');
   if (tfEl) { if (ac >= 2) { tfEl.textContent = (od==='LONG'?'✅':'⚠️') + ' TF Hizalandi — ' + od; tfEl.style.color = od==='LONG'?'#4caf50':'#ff9800'; } else { tfEl.textContent = '❌ TF Hizalamasi Yok — Islem YAPMA'; tfEl.style.color = '#f44336'; } }
   if (window._renderSR) window._renderSR(data.allSR||[], data.obs||[], data.price);
   if (window._renderMini && c15m) window._renderMini(c15m);
+  var rsi15 = data.rsi15||50; var rsiC = rsi15<30?'#4caf50':rsi15>70?'#f44336':'#888';
   if (window._updateGauge) {
-    var r15=data.rsi15||50, rc=r15<30?'#4caf50':r15>70?'#f44336':'#888';
-    window._updateGauge('rsiBar','rsiVal',r15,0,100,rc);
-    if (window._updateMACDG) { window._updateMACDG('macdBar','macdVal',data.macd15); window._updateMACDG('macd1hBar','macd1hVal',data.macd1h); }
-    window._updateGauge('stochBar','stochVal',(data.stoch15||{}).k||50,0,100,'#9c27b0');
-    window._updateGauge('adxBar','adxBarVal',data.adx15||0,0,60,'#ff9800');
+    window._updateGauge('rsiBar','rsiVal',rsi15,0,100,rsiC);
+    var stoch15 = data.stoch15||{k:50,d:50}; window._updateGauge('stochBar','stochVal',stoch15.k||50,0,100,'#9c27b0');
+    window._updateGauge('adxBar','adxBarVal',adxVal,0,60,'#ff9800');
     window._updateGauge('volBar','volVal',Math.min((data.volRatio||1)*50,100),0,100,'#2196f3',(data.volRatio||1).toFixed(1)+'x');
-    window._updateGauge('bbBar','bbVal',(data.bbWidth15||0)*100,0,10,'#607d8b',(data.atr15||0).toFixed(2));
-    var r1h=data.rsi1h||50; window._updateGauge('rsi1hBar','rsi1hVal',r1h,0,100,r1h<30?'#4caf50':r1h>70?'#f44336':'#888');
-    var e1h=data.ema50_1h||data.price; if(g('ema1hBar')){g('ema1hBar').style.width='60%';g('ema1hBar').style.background=data.price>e1h?'#4caf50':'#f44336';} if(g('ema1hVal'))g('ema1hVal').textContent='$'+(e1h||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:4});
+    window._updateGauge('bbBar','bbVal',bbWidth,0,10,'#607d8b',(data.atr15||0).toFixed(2));
+    var rsi1h = data.rsi1h||50; window._updateGauge('rsi1hBar','rsi1hVal',rsi1h,0,100,rsi1h<30?'#4caf50':rsi1h>70?'#f44336':'#888');
+    var e1h = data.ema50_1h||data.price; if(g('ema1hBar')){g('ema1hBar').style.width='60%';g('ema1hBar').style.background=data.price>e1h?'#4caf50':'#f44336';} if(g('ema1hVal'))g('ema1hVal').textContent='$'+(e1h||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:4});
   }
-  var aPlus=(data.signals||[]).filter(function(s){return s.score>=80;});
-  var waiting=(data.signals||[]).filter(function(s){return s.score>=60&&s.score<80;});
+  if (window._updateMACDG && data.macd15) { window._updateMACDG('macdBar','macdVal',data.macd15); }
+  if (window._updateMACDG && data.macd1h) { window._updateMACDG('macd1hBar','macd1hVal',data.macd1h); }
+  var aPlus = (data.signals||[]).filter(function(s){return s.score>=80;});
+  var waiting = (data.signals||[]).filter(function(s){return s.score>=60&&s.score<80;});
   if (window.renderSignals) window.renderSignals(aPlus, waiting, data);
-  var ts = data.totalScore || (aPlus.length > 0 ? aPlus[0].score : 0);
+  var ts = data.totalScore || (aPlus.length>0?aPlus[0].score:0);
   if (g('liveScoreVal')) g('liveScoreVal').textContent = ts + 'p';
   var sel = g('coinSelector');
   if (sel) { for (var i=0;i<sel.options.length;i++) { if (sel.options[i].value===data.sym) { var star=aPlus.length>0?'✶ ':''; sel.options[i].text=star+data.sym.replace('USDT','/USDT')+' — '+ts+'p'; break; } } }
