@@ -670,7 +670,7 @@ body { background: var(--bg-primary); color: var(--text-primary); font-family: '
   <div class="header-center">
   <button class="scan-trigger-btn" id="openScannerBtn" onclick="window.openScanner()">🔍 En İyi Coinler</button><button id="openMultiScanBtn" class="scan-trigger-btn" style="background: linear-gradient(135deg, rgba(0, 180, 255, 0.15), rgba(0, 100, 200, 0.1)); border-color: rgb(0, 180, 255); color: rgb(0, 180, 255); margin-left: 6px; position: relative;">📊 Sinyal Taraması <span style="position:absolute;top:-4px;right:-4px;background:#00ff88;color:#000;font-size:8px;font-weight:900;padding:1px 4px;border-radius:8px;" id="msAplusDot">3</span></button>
   <div class="coin-picker-wrap">
-    <select class="coin-select-styled" id="coinSelector"><option value="MUUSDT">MU/USDT</option><option value="ETHUSDT">⭐ ETH/USDT — 91p</option><option value="BTCUSDT">⭐ BTC/USDT — 90p</option><option value="TAOUSDT">✦ TAO/USDT — 84p</option><option value="NEARUSDT">✦ NEAR/USDT — 82p</option><option value="ZECUSDT">✦ ZEC/USDT — 82p</option><option value="SUIUSDT">✦ SUI/USDT — 80p</option><option value="ONDOUSDT">· ONDO/USDT — 78p</option><option value="SOLUSDT">· SOL/USDT — 78p</option><option value="FARTCOINUSDT">· FARTCOIN/USDT — 76p</option><option value="TONUSDT">· TON/USDT — 76p</option><option value="VVVUSDT">· VVV/USDT — 76p</option><option value="WIFUSDT">· WIF/USDT — 76p</option><option value="XRPUSDT">· XRP/USDT — 76p</option><option value="XMRUSDT">· XMR/USDT — 75p</option><option value="CLUSDT">· CL/USDT — 74p</option><option value="ENAUSDT">· ENA/USDT — 74p</option><option value="FILUSDT">· FIL/USDT — 73p</option><option value="ICPUSDT">· ICP/USDT — 71p</option><option value="RENDERUSDT">· RENDER/USDT — 70p</option><option value="XAUTUSDT">· XAUT/USDT — 70p</option></select>
+    <select class="coin-select-styled" id="coinSelector" onchange="window.updateLiveBadge && window.updateLiveBadge(this.value); if(window._mainInterval) window.startScan();"><option value="MUUSDT">MU/USDT</option><option value="ETHUSDT">⭐ ETH/USDT — 91p</option><option value="BTCUSDT">⭐ BTC/USDT — 90p</option><option value="TAOUSDT">✦ TAO/USDT — 84p</option><option value="NEARUSDT">✦ NEAR/USDT — 82p</option><option value="ZECUSDT">✦ ZEC/USDT — 82p</option><option value="SUIUSDT">✦ SUI/USDT — 80p</option><option value="ONDOUSDT">· ONDO/USDT — 78p</option><option value="SOLUSDT">· SOL/USDT — 78p</option><option value="FARTCOINUSDT">· FARTCOIN/USDT — 76p</option><option value="TONUSDT">· TON/USDT — 76p</option><option value="VVVUSDT">· VVV/USDT — 76p</option><option value="WIFUSDT">· WIF/USDT — 76p</option><option value="XRPUSDT">· XRP/USDT — 76p</option><option value="XMRUSDT">· XMR/USDT — 75p</option><option value="CLUSDT">· CL/USDT — 74p</option><option value="ENAUSDT">· ENA/USDT — 74p</option><option value="FILUSDT">· FIL/USDT — 73p</option><option value="ICPUSDT">· ICP/USDT — 71p</option><option value="RENDERUSDT">· RENDER/USDT — 70p</option><option value="XAUTUSDT">· XAUT/USDT — 70p</option></select>
     <div class="coin-live-badge" id="liveBadge">
       <div>
         <div style="font-size:9px;color:var(--text-muted);letter-spacing:0.5px">TARAMA SKORU</div>
@@ -934,6 +934,10 @@ Skor eşiği: 75/100 · R:R eşiği: 2.0</div>
       <div id="alertLog"></div>
     </div>
     <div id="tabPanel_archive" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #333">
+        <span style="font-size:10px;color:#888">A+ Sinyaller (Skor ≥ 80)</span>
+        <button onclick="window.clearArchive && window.clearArchive()" style="font-size:10px;padding:2px 8px;background:#c62828;color:#fff;border:none;border-radius:4px;cursor:pointer">Temizle</button>
+      </div>
       <div id="archiveList"></div>
     </div>
   </div>
@@ -2950,6 +2954,60 @@ window.updateDropdown=function(r){var s=document.getElementById('coinSelector');
 
 window.fmtP=window._fmtP;
 window.fmtV=window._fmtV;
+
+
+// === FIXES: updateLiveBadge, clearArchive ===
+
+window.updateLiveBadge = function(sym) {
+  if(!window._scanResults) return;
+  const coin = window._scanResults.find(r => r.sym === sym);
+  if(!coin) return;
+  
+  const badge  = document.getElementById('liveBadge');
+  const val    = document.getElementById('liveScoreVal');
+  const timer  = document.getElementById('scanCountText');
+  
+  // Skor rengi
+  const cls = coin.totalScore >= 95 ? 's100' : coin.totalScore >= 85 ? 's90' : coin.totalScore >= 75 ? 's80' : coin.totalScore >= 65 ? 's70' : 's60';
+  if(val) {
+    val.className = 'coin-score-val ' + cls;
+    val.textContent = coin.totalScore + 'p';
+  }
+  
+  // Mini barlar: H=volume, V=volatility, F=funding, S=spread, M=momentum
+  const keys = ['volume','volatility','funding','spread','momentum'];
+  const ids  = ['H','V','F','S','M'];
+  keys.forEach((k, i) => {
+    const bar = document.getElementById('miniBar' + ids[i]);
+    if(!bar) return;
+    const score = coin['score_' + k] || coin[k + 'Score'] || 50;
+    const h = Math.max(2, Math.round(score / 100 * 16));
+    bar.style.height = h + 'px';
+    bar.style.background = score >= 70 ? '#4caf50' : score >= 40 ? '#ff9800' : '#f44336';
+  });
+  
+  // Coin sayısı
+  const countEl = document.getElementById('scanCountText');
+  if(countEl && window._scanResults) {
+    countEl.textContent = window._scanResults.length + ' coin aktif';
+  }
+  
+  // Son güncelleme saati
+  const luEl = document.getElementById('lastUpdate');
+  if(luEl) luEl.textContent = new Date().toLocaleTimeString('tr-TR');
+  
+  // Badge flash efekti
+  if(badge) {
+    badge.classList.add('updating');
+    setTimeout(() => badge.classList.remove('updating'), 600);
+  }
+};
+
+window.clearArchive = function() {
+  window._signalArchive = [];
+  if(window._renderArchiveTab) window._renderArchiveTab();
+};
+
 </script>
 </body>
 </html>
