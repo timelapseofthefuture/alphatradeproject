@@ -2939,6 +2939,14 @@ document.addEventListener('DOMContentLoaded', function() {
   window._mainInterval = setInterval(window.doAnalysis, 30000);
   console.log('[AlphaSignal Pro] Bootstrap complete');
 });
+
+// === MISSING SCORE FUNCTIONS ===
+window.volumeScore=function(v){if(v<15e6)return 0;if(v<50e6)return 20;if(v<150e6)return 45;if(v<500e6)return 65;if(v<1500e6)return 80;if(v<5000e6)return 95;return 100;};
+window.volatilityScore=function(p){var a=Math.abs(p);if(a<0.5)return 0;if(a<1)return 30;if(a<2.5)return 70;if(a<5)return 100;if(a<8)return 75;if(a<12)return 40;return 10;};
+window.spreadScore=function(b,a,p){if(!b||!a||!p)return 50;var s=(a-b)/p*100;if(s<0.01)return 100;if(s<0.02)return 85;if(s<0.05)return 65;if(s<0.1)return 40;if(s<0.2)return 20;return 0;};
+window.fundingScore=function(r){var a=Math.abs(r);if(a<0.0001)return 100;if(a<0.0002)return 90;if(a<0.0005)return 70;if(a<0.001)return 50;if(a<0.002)return 25;return 0;};
+window.momentumScore=function(p,h){var a=Math.abs(p),b=Math.abs(+h||0);if(a>2&&b>0.3)return 100;if(a>1.5&&b>0.2)return 80;if(a<1)return 60;if(a>0.5)return 40;return 10;};
+window.updateDropdown=function(r){var s=document.getElementById('coinSelector');if(!s)return;var cv=s.value;s.innerHTML='';r.slice(0,20).forEach(function(x){var o=document.createElement('option');o.value=x.sym;o.textContent=(x.totalScore>=80?'🟢':x.totalScore>=60?'🟡':'⚪')+' '+x.sym.replace('USDT','')+' '+x.totalScore+'p';s.appendChild(o);});if(cv)s.value=cv;};
 </script>
 </body>
 </html>
