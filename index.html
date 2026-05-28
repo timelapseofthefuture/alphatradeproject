@@ -2963,20 +2963,21 @@ window.updateDropdown = function(r) {
   r.slice(0, 20).forEach(function(x) {
     var o = document.createElement('option');
     o.value = x.sym;
-    var icon = x.totalScore >= 80 ? '\u{1F3C6}' : x.totalScore >= 60 ? '\u{1F947}' : '\u26AA';
+    var icon = x.totalScore >= 80 ? '\uD83C\uDFC6' : x.totalScore >= 60 ? '\uD83E\uDD47' : '\u26AA';
     o.textContent = icon + ' ' + x.sym.replace('USDT','/USDT') + ' ' + x.totalScore + 'p';
     s.appendChild(o);
   });
-  if(cv && !r.slice(0,20).find(x => x.sym === cv)) {
+  // Mevcut coini ekle - gerçek score ile
+  if(cv && !r.slice(0,20).find(function(x){return x.sym===cv;})) {
+    var cvCoin = r.find(function(x){return x.sym===cv;});
     var o2 = document.createElement('option');
     o2.value = cv;
-    o2.textContent = cv.replace('USDT','/USDT') + ' \u2014 0p';
+    o2.textContent = cv.replace('USDT','/USDT') + (cvCoin ? ' \u2014 ' + cvCoin.totalScore + 'p' : ' \u2014 ?');
     s.insertBefore(o2, s.firstChild);
   }
   if(cv) s.value = cv;
   if(window.updateLiveBadge) window.updateLiveBadge(s.value);
-};
-window.fmtP=window._fmtP;
+};window.fmtP=window._fmtP;
 window.fmtV=window._fmtV;
 
 
