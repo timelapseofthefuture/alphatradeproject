@@ -2958,23 +2958,20 @@ window.fmtV=window._fmtV;
 
 // === FIXES: updateLiveBadge, clearArchive ===
 
-window.updateLiveBadge = function(sym) {
+window.updateLiveBadge = async function(sym) {
+  if(!window._scanResults || !window._scanResults.length) {
+    try { if(window.refreshScanner) await window.refreshScanner(); } catch(e) {}
+  }
   if(!window._scanResults) return;
   const coin = window._scanResults.find(r => r.sym === sym);
   if(!coin) return;
   
-  const badge  = document.getElementById('liveBadge');
-  const val    = document.getElementById('liveScoreVal');
-  const timer  = document.getElementById('scanCountText');
+  const badge = document.getElementById('liveBadge');
+  const val   = document.getElementById('liveScoreVal');
   
-  // Skor rengi
   const cls = coin.totalScore >= 95 ? 's100' : coin.totalScore >= 85 ? 's90' : coin.totalScore >= 75 ? 's80' : coin.totalScore >= 65 ? 's70' : 's60';
-  if(val) {
-    val.className = 'coin-score-val ' + cls;
-    val.textContent = coin.totalScore + 'p';
-  }
+  if(val) { val.className = 'coin-score-val ' + cls; val.textContent = coin.totalScore + 'p'; }
   
-  // Mini barlar: H=volume, V=volatility, F=funding, S=spread, M=momentum
   const keys = ['volume','volatility','funding','spread','momentum'];
   const ids  = ['H','V','F','S','M'];
   keys.forEach((k, i) => {
@@ -2986,21 +2983,13 @@ window.updateLiveBadge = function(sym) {
     bar.style.background = score >= 70 ? '#4caf50' : score >= 40 ? '#ff9800' : '#f44336';
   });
   
-  // Coin sayısı
   const countEl = document.getElementById('scanCountText');
-  if(countEl && window._scanResults) {
-    countEl.textContent = window._scanResults.length + ' coin aktif';
-  }
+  if(countEl && window._scanResults) countEl.textContent = window._scanResults.length + ' coin aktif';
   
-  // Son güncelleme saati
   const luEl = document.getElementById('lastUpdate');
   if(luEl) luEl.textContent = new Date().toLocaleTimeString('tr-TR');
   
-  // Badge flash efekti
-  if(badge) {
-    badge.classList.add('updating');
-    setTimeout(() => badge.classList.remove('updating'), 600);
-  }
+  if(badge) { badge.classList.add('updating'); setTimeout(() => badge.classList.remove('updating'), 600); }
 };
 
 window.clearArchive = function() {
