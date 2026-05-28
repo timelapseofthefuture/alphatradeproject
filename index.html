@@ -2940,6 +2940,11 @@ document.addEventListener('DOMContentLoaded', function() {
   if (sel) sel.addEventListener('change', function() { window._currentSym = this.value; window.doAnalysis(); });
   window._currentSym = sel ? (sel.value || 'BTCUSDT') : 'BTCUSDT';
   window.doAnalysis();
+  setTimeout(async function() {
+    if(window.refreshScanner) {
+      try { await window.refreshScanner(); } catch(e) {}
+    }
+  }, 5000);
   window._mainInterval = setInterval(window.doAnalysis, 30000);
   console.log('[AlphaSignal Pro] Bootstrap complete');
 });
